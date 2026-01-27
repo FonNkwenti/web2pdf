@@ -79,6 +79,29 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
         pageTitle = pageTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 50);
         const defaultFilename = `${pageTitle || 'document'}.pdf`;
 
+        // Trigger lazy loading by scrolling to bottom
+        mainWindow.webContents.send('conversion-status', { status: 'processing', message: 'Loading images...' });
+        
+        await offscreenWindow.webContents.executeJavaScript(`
+            new Promise((resolve) => {
+                let totalHeight = 0;
+                const distance = 200;
+                const timer = setInterval(() => {
+                    const scrollHeight = document.body.scrollHeight;
+                    window.scrollBy(0, distance);
+                    totalHeight += distance;
+
+                    if(totalHeight >= scrollHeight){
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }, 50); // Fast scroll
+            });
+        `);
+        
+        // Brief wait for any final network requests
+        await new Promise(r => setTimeout(r, 1000));
+
         mainWindow.webContents.send('conversion-status', { status: 'processing', message: 'Generating PDF...' });
 
         if (type === 'article') {
@@ -95,6 +118,13 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
                  
                  await offscreenWindow.webContents.executeJavaScript(`
                     try {
+                        // Attempt to fix lazy loaded images before parsing
+                        const images = document.querySelectorAll('img');
+                        images.forEach(img => {
+                            if (img.dataset.src) img.src = img.dataset.src;
+                            if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+                        });
+
                         const article = new Readability(document.cloneNode(true)).parse();
                         if (article) {
                             // Replace content with article
@@ -114,6 +144,8 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
                                     .byline { color: #666; font-size: 14px; margin-bottom: 30px; font-style: italic; }
                                     .article-content { font-size: 18px; }
                                     img { max-width: 100%; height: auto; margin: 20px 0; display: block; border-radius: 4px; }
+                                    figure { margin: 20px 0; max-width: 100%; }
+                                    figcaption { font-size: 0.9em; color: #666; margin-top: 5px; font-style: italic; }
                                     p { margin-bottom: 1.5em; }
                                     a { color: #0066cc; text-decoration: none; }
                                     pre, code { background: #f5f5f5; padding: 5px; border-radius: 4px; font-family: monospace; overflow-x: auto; }
