@@ -51,6 +51,7 @@ app.on('activate', () => {
 });
 
 // IPC Handler for PDF Conversion
+// IPC Handler for PDF Conversion
 ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
     console.log(`Received request to convert ${url} to ${type}`);
     
@@ -59,8 +60,8 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
 
     const offscreenWindow = new BrowserWindow({
         show: false,
-        width: 1200, // Standard desktop width for better rendering
-        height: 800,
+        width: 1600, // Wider for better layout capture
+        height: 1200,
         webPreferences: {
             offscreen: true,
             javascript: true,
@@ -72,6 +73,12 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
     try {
         await offscreenWindow.loadURL(url, { waitUntil: 'networkidle0' });
         
+        // Get the title for naming
+        let pageTitle = await offscreenWindow.getTitle();
+        // Sanitize title
+        pageTitle = pageTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 50);
+        const defaultFilename = `${pageTitle || 'document'}.pdf`;
+
         mainWindow.webContents.send('conversion-status', { status: 'processing', message: 'Generating PDF...' });
 
         if (type === 'article') {
@@ -91,15 +98,32 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
                         const article = new Readability(document.cloneNode(true)).parse();
                         if (article) {
                             // Replace content with article
+                            // Added better styling for PDF: larger text, full width, image handling
                             document.body.innerHTML = \`
-                                <div style="font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; line-height: 1.6;">
-                                    <h1 style="font-size: 2.5em; margin-bottom: 0.5em;">\${article.title}</h1>
-                                    <div style="color: #666; margin-bottom: 2em;">\${article.byline || ''}</div>
+                                <style>
+                                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+                                    .article-container { 
+                                        width: 100%; 
+                                        padding: 20px; 
+                                        box-sizing: border-box; 
+                                        font-size: 16px; 
+                                        line-height: 1.6; 
+                                        color: #333;
+                                    }
+                                    h1 { font-size: 28px; margin-bottom: 10px; color: #111; }
+                                    .byline { color: #666; font-size: 14px; margin-bottom: 30px; font-style: italic; }
+                                    .article-content { font-size: 18px; }
+                                    img { max-width: 100%; height: auto; margin: 20px 0; display: block; border-radius: 4px; }
+                                    p { margin-bottom: 1.5em; }
+                                    a { color: #0066cc; text-decoration: none; }
+                                    pre, code { background: #f5f5f5; padding: 5px; border-radius: 4px; font-family: monospace; overflow-x: auto; }
+                                </style>
+                                <div class="article-container">
+                                    <h1>\${article.title}</h1>
+                                    <div class="byline">\${article.byline || 'Unknown Author'}</div>
                                     <div class="article-content">\${article.content}</div>
                                 </div>
                             \`;
-                            // Remove all scripts and styles to prevent conflicts? 
-                            // Actually, keeping generic styles is okay, but we want a clean read.
                         } else {
                             console.error('Readability failed to parse article');
                         }
@@ -115,20 +139,21 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
         
         // Full Page or after Article extraction
         const pdfData = await offscreenWindow.webContents.printToPDF({
-            printBackground: true,
+            printBackground: true, // Crucial for images and colors
+            landscape: false,
             pageSize: 'A4',
             margins: {
-                top: 0.5,
-                bottom: 0.5,
-                left: 0.5,
-                right: 0.5
+                top: 0.4, // Smaller margins
+                bottom: 0.4,
+                left: 0.4,
+                right: 0.4
             }
         });
         
         // Ask user where to save
         const { filePath } = await dialog.showSaveDialog({
             title: 'Save PDF',
-            defaultPath: path.join(app.getPath('downloads'), 'document.pdf'),
+            defaultPath: path.join(app.getPath('downloads'), defaultFilename),
             filters: [{ name: 'PDFs', extensions: ['pdf'] }]
         });
 
