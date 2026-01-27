@@ -118,17 +118,29 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type, preview, settings })
                         if (article) {
                             document.body.innerHTML = \`
                                 <style>
-                                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-                                    .article-container { width: 100%; padding: 20px; box-sizing: border-box; font-size: 16px; line-height: 1.6; color: #333; }
-                                    h1 { font-size: 28px; margin-bottom: 10px; color: #111; }
+                                    html, body { 
+                                        height: auto !important; 
+                                        overflow: visible !important; 
+                                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+                                    }
+                                    .article-container { 
+                                        width: 100%; 
+                                        padding: 20px; 
+                                        box-sizing: border-box; 
+                                        font-size: 16px; 
+                                        line-height: 1.6; 
+                                        color: #333;
+                                        display: block;
+                                    }
+                                    h1 { font-size: 28px; margin-bottom: 10px; color: #111; break-after: avoid; }
                                     .byline { color: #666; font-size: 14px; margin-bottom: 30px; font-style: italic; }
                                     .article-content { font-size: 18px; }
-                                    img { max-width: 100%; height: auto; margin: 20px 0; display: block; border-radius: 4px; }
-                                    figure { margin: 20px 0; max-width: 100%; }
+                                    img { max-width: 100%; height: auto; margin: 20px 0; display: block; border-radius: 4px; break-inside: avoid; }
+                                    figure { margin: 20px 0; max-width: 100%; break-inside: avoid; }
                                     figcaption { font-size: 0.9em; color: #666; margin-top: 5px; font-style: italic; }
-                                    p { margin-bottom: 1.5em; }
+                                    p { margin-bottom: 1.5em; break-inside: avoid; }
                                     a { color: #0066cc; text-decoration: none; }
-                                    pre, code { background: #f5f5f5; padding: 5px; border-radius: 4px; font-family: monospace; overflow-x: auto; }
+                                    pre, code { background: #f5f5f5; padding: 5px; border-radius: 4px; font-family: monospace; overflow-x: auto; break-inside: avoid; white-space: pre-wrap; }
                                 </style>
                                 <div class="article-container">
                                     <h1>\${article.title}</h1>
