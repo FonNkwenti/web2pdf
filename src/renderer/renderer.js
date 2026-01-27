@@ -1,34 +1,61 @@
 const urlInput = document.getElementById('urlInput');
 const convertBtn = document.getElementById('convertBtn');
+const previewBtn = document.getElementById('previewBtn');
 const btnText = convertBtn.querySelector('.btn-text');
+const previewBtnText = previewBtn.querySelector('.btn-text');
 const loadingSpinner = convertBtn.querySelector('.loading-spinner');
+const previewSpinner = previewBtn.querySelector('.loading-spinner');
 const statusMessage = document.getElementById('statusMessage');
 const statusText = statusMessage.querySelector('.text');
 const radioItems = document.querySelectorAll('.radio-item');
-const helpBtn = document.getElementById('helpBtn');
-const helpModal = document.getElementById('helpModal');
-const closeModal = document.querySelector('.close-modal');
 
+// Settings Elements
+const toggleSettings = document.getElementById('toggleSettings');
+const settingsPanel = document.getElementById('settingsPanel');
+const pageSizeInput = document.getElementById('pageSize');
+const orientationInput = document.getElementById('orientation');
+const marginsInput = document.getElementById('margins');
+
+// Preview Elements
+const previewContainer = document.getElementById('previewContainer');
+const pdfPreviewFrame = document.getElementById('pdfPreviewFrame');
+const closePreview = document.getElementById('closePreview');
+
+// Recent URLs
+const recentList = document.getElementById('recentList');
+
+// State
 let isConverting = false;
 
+// Initialize
+loadRecent();
+
 // Helpers
-function setLoading(loading) {
+function setLoading(loading, isPreview = false) {
     isConverting = loading;
     convertBtn.disabled = loading;
+    previewBtn.disabled = loading;
+    
     if (loading) {
-        btnText.classList.add('hidden');
-        loadingSpinner.classList.remove('hidden');
         statusMessage.classList.remove('hidden');
+        if (isPreview) {
+            previewBtnText.classList.add('hidden');
+            previewSpinner.classList.remove('hidden');
+        } else {
+            btnText.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+        }
     } else {
         btnText.classList.remove('hidden');
         loadingSpinner.classList.add('hidden');
+        previewBtnText.classList.remove('hidden');
+        previewSpinner.classList.add('hidden');
     }
 }
 
 function updateStatus(message, status = 'info') {
     statusText.textContent = message;
     statusMessage.classList.remove('hidden');
-    // You could add different colors based on status (error = red, success = green)
     if (status === 'error') {
         statusText.style.color = '#ff7675';
     } else if (status === 'complete') {
@@ -38,43 +65,126 @@ function updateStatus(message, status = 'info') {
     }
 }
 
+function getSettings() {
+    return {
+        pageSize: pageSizeInput.value,
+        landscape: orientationInput.value === 'landscape',
+        marginsType: marginsInput.value // 'default', 'none', 'minimum'
+    };
+}
+
+// Recent URLs Logic
+function loadRecent() {
+    const recent = JSON.parse(localStorage.getItem('recentUrls') || '[]');
+    recentList.innerHTML = '';
+    
+    if (recent.length === 0) {
+        recentList.innerHTML = '<li class="recent-item" style="justify-content:center; color: var(--text-muted);">No recent history</li>';
+        return;
+    }
+
+    recent.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'recent-item';
+        li.innerHTML = `
+            <span class="recent-url" title="${item.url}">${item.url}</span>
+            <span class="recent-date">${new Date(item.date).toLocaleDateString()}</span>
+        `;
+        li.addEventListener('click', () => {
+            urlInput.value = item.url;
+        });
+        recentList.appendChild(li);
+    });
+}
+
+function saveRecent(url) {
+    let recent = JSON.parse(localStorage.getItem('recentUrls') || '[]');
+    // Remove if exists (to move to top)
+    recent = recent.filter(r => r.url !== url);
+    // Add to top
+    recent.unshift({ url, date: new Date().toISOString() });
+    // Limit to 10
+    if (recent.length > 10) recent.pop();
+    
+    localStorage.setItem('recentUrls', JSON.stringify(recent));
+    loadRecent();
+}
+
 // Event Listeners
+toggleSettings.addEventListener('click', () => {
+    settingsPanel.classList.toggle('hidden');
+    toggleSettings.classList.toggle('open');
+});
+
 radioItems.forEach(item => {
     item.addEventListener('click', () => {
         if (isConverting) return;
-        // Remove active class from all
         radioItems.forEach(ri => ri.classList.remove('active'));
-        // Add to clicked
         item.classList.add('active');
         item.querySelector('input').checked = true;
     });
 });
 
-convertBtn.addEventListener('click', async () => {
+async function handleConversion(isPreview = false) {
     const url = urlInput.value.trim();
     if (!url) {
         updateStatus('Please enter a valid URL.', 'error');
         return;
     }
-
-    // specific check for valid URL format could go here
     try {
         new URL(url);
     } catch {
-        updateStatus('Invalid URL format. Include http:// or https://', 'error');
+        updateStatus('Invalid URL format.', 'error');
         return;
     }
 
     const type = document.querySelector('input[name="conversionType"]:checked').value;
+    const settings = getSettings();
 
-    setLoading(true);
-    updateStatus('Initializing conversion...');
-
-    const result = await window.api.convert({ url, type });
+    setLoading(true, isPreview);
+    updateStatus(isPreview ? 'Generating preview...' : 'Initializing download...');
     
-    // Result handling is mostly done via onStatusUpdate events, 
-    // but the final promise return can also be used if needed.
-    // If we rely purely on events, we just listen below.
+    // Save to history
+    saveRecent(url);
+
+    try {
+        const result = await window.api.convert({ 
+            url, 
+            type, 
+            preview: isPreview,
+            settings 
+        });
+
+        if (isPreview && result && result.success && result.filePath) {
+            // Show preview
+            pdfPreviewFrame.src = `file://${result.filePath}#toolbar=0&view=FitH`;
+            previewContainer.classList.remove('hidden');
+            updateStatus('Preview generated.', 'complete');
+        } 
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+convertBtn.addEventListener('click', () => handleConversion(false));
+previewBtn.addEventListener('click', () => handleConversion(true));
+
+// Preview Modal
+closePreview.addEventListener('click', () => {
+    previewContainer.classList.add('hidden');
+    pdfPreviewFrame.src = 'about:blank'; // Clear memory
+});
+
+// Help Modal (Existing code)
+const helpBtn = document.getElementById('helpBtn');
+const helpModal = document.getElementById('helpModal');
+const closeModal = document.querySelector('.close-modal');
+
+helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+closeModal.addEventListener('click', () => helpModal.classList.add('hidden'));
+window.addEventListener('click', (e) => {
+    if (e.target === helpModal) helpModal.classList.add('hidden');
+    if (e.target === previewContainer) previewContainer.classList.add('hidden');
 });
 
 // IPC Listeners
@@ -83,25 +193,9 @@ window.api.onStatusUpdate((data) => {
     updateStatus(data.message, data.status);
     
     if (data.status === 'complete' || data.status === 'error' || data.status === 'cancelled') {
-        setLoading(false);
-        // If complete, maybe clear input?
-        if (data.status === 'complete') {
-            // urlInput.value = ''; 
-        }
-    }
-});
-
-// Modal
-helpBtn.addEventListener('click', () => {
-    helpModal.classList.remove('hidden');
-});
-
-closeModal.addEventListener('click', () => {
-    helpModal.classList.add('hidden');
-});
-
-window.addEventListener('click', (e) => {
-    if (e.target === helpModal) {
-        helpModal.classList.add('hidden');
+        const isPreview = statusText.textContent.includes('Preview'); // Hacky but works for now to turn off correct spinner
+        // Actually simplest is to turn off both
+        setLoading(false, true); 
+        setLoading(false, false);
     }
 });

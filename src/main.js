@@ -51,35 +51,32 @@ app.on('activate', () => {
 });
 
 // IPC Handler for PDF Conversion
-// IPC Handler for PDF Conversion
-ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
-    console.log(`Received request to convert ${url} to ${type}`);
+ipcMain.handle('convert-to-pdf', async (event, { url, type, preview, settings }) => {
+    console.log(`Received request to convert ${url} to ${type} (Preview: ${preview})`);
     
     // Notify renderer that we started
-    mainWindow.webContents.send('conversion-status', { status: 'loading', message: 'Loading page...' });
+    mainWindow.webContents.send('conversion-status', { status: 'loading', message: preview ? 'Generating preview...' : 'Loading page...' });
 
     const offscreenWindow = new BrowserWindow({
         show: false,
-        width: 1600, // Wider for better layout capture
+        width: 1600, 
         height: 1200,
         webPreferences: {
             offscreen: true,
             javascript: true,
-            contextIsolation: false, // Easier for injection in offscreen
-             nodeIntegration: false
+            contextIsolation: false, 
+            nodeIntegration: false
         }
     });
 
     try {
         await offscreenWindow.loadURL(url, { waitUntil: 'networkidle0' });
         
-        // Get the title for naming
         let pageTitle = await offscreenWindow.getTitle();
-        // Sanitize title
         pageTitle = pageTitle.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').substring(0, 50);
         const defaultFilename = `${pageTitle || 'document'}.pdf`;
 
-        // Trigger lazy loading by scrolling to bottom
+        // Trigger lazy loading
         mainWindow.webContents.send('conversion-status', { status: 'processing', message: 'Loading images...' });
         
         await offscreenWindow.webContents.executeJavaScript(`
@@ -95,51 +92,33 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
                         clearInterval(timer);
                         resolve();
                     }
-                }, 50); // Fast scroll
+                }, 50); 
             });
         `);
         
-        // Brief wait for any final network requests
         await new Promise(r => setTimeout(r, 1000));
 
         mainWindow.webContents.send('conversion-status', { status: 'processing', message: 'Generating PDF...' });
 
         if (type === 'article') {
              mainWindow.webContents.send('conversion-status', { status: 'processing', message: 'Extracting article...' });
-             
-             // Locate Readability
              const readabilityPath = path.join(__dirname, '../node_modules/@mozilla/readability/Readability.js');
-             
              if (fs.existsSync(readabilityPath)) {
                  const readabilityCode = fs.readFileSync(readabilityPath, 'utf8');
-                 
-                 // Inject Readability and extract content
                  await offscreenWindow.webContents.executeJavaScript(readabilityCode);
-                 
                  await offscreenWindow.webContents.executeJavaScript(`
                     try {
-                        // Attempt to fix lazy loaded images before parsing
                         const images = document.querySelectorAll('img');
                         images.forEach(img => {
                             if (img.dataset.src) img.src = img.dataset.src;
                             if (img.dataset.srcset) img.srcset = img.dataset.srcset;
                         });
-
                         const article = new Readability(document.cloneNode(true)).parse();
                         if (article) {
-                            // Replace content with article
-                            // Added better styling for PDF: larger text, full width, image handling
                             document.body.innerHTML = \`
                                 <style>
                                     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-                                    .article-container { 
-                                        width: 100%; 
-                                        padding: 20px; 
-                                        box-sizing: border-box; 
-                                        font-size: 16px; 
-                                        line-height: 1.6; 
-                                        color: #333;
-                                    }
+                                    .article-container { width: 100%; padding: 20px; box-sizing: border-box; font-size: 16px; line-height: 1.6; color: #333; }
                                     h1 { font-size: 28px; margin-bottom: 10px; color: #111; }
                                     .byline { color: #666; font-size: 14px; margin-bottom: 30px; font-style: italic; }
                                     .article-content { font-size: 18px; }
@@ -156,48 +135,52 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
                                     <div class="article-content">\${article.content}</div>
                                 </div>
                             \`;
-                        } else {
-                            console.error('Readability failed to parse article');
-                        }
-                    } catch (err) {
-                        console.error('Extraction error:', err);
-                    }
+                        } else { console.error('Readability parse failed'); }
+                    } catch (err) { console.error('Extraction error:', err); }
                  `);
-             } else {
-                 console.error('Readability.js not found at:', readabilityPath);
-                 throw new Error('Readability library not found.');
              }
         } 
         
-        // Full Page or after Article extraction
+        // Handle Settings
+        const pageSize = settings?.pageSize || 'A4';
+        const landscape = settings?.landscape || false;
+        let margins = { top: 0.4, bottom: 0.4, left: 0.4, right: 0.4 }; // Default
+        
+        if (settings?.marginsType === 'none') {
+            margins = { top: 0, bottom: 0, left: 0, right: 0 };
+        } else if (settings?.marginsType === 'minimum') {
+             margins = { top: 0.1, bottom: 0.1, left: 0.1, right: 0.1 };
+        }
+
         const pdfData = await offscreenWindow.webContents.printToPDF({
-            printBackground: true, // Crucial for images and colors
-            landscape: false,
-            pageSize: 'A4',
-            margins: {
-                top: 0.4, // Smaller margins
-                bottom: 0.4,
-                left: 0.4,
-                right: 0.4
-            }
+            printBackground: true, 
+            landscape: landscape,
+            pageSize: pageSize,
+            margins: margins
         });
         
-        // Ask user where to save
-        const { filePath } = await dialog.showSaveDialog({
-            title: 'Save PDF',
-            defaultPath: path.join(app.getPath('downloads'), defaultFilename),
-            filters: [{ name: 'PDFs', extensions: ['pdf'] }]
-        });
-
-        if (filePath) {
-            fs.writeFileSync(filePath, pdfData);
-            mainWindow.webContents.send('conversion-status', { status: 'complete', message: 'PDF saved successfully!' });
-             // Open the file or folder?
-            shell.showItemInFolder(filePath);
-            return { success: true, filePath };
+        if (preview) {
+             const tempPath = path.join(os.tmpdir(), `preview_${Date.now()}.pdf`);
+             fs.writeFileSync(tempPath, pdfData);
+             mainWindow.webContents.send('conversion-status', { status: 'complete', message: 'Preview ready' });
+             return { success: true, filePath: tempPath };
         } else {
-             mainWindow.webContents.send('conversion-status', { status: 'cancelled', message: 'Save cancelled.' });
-             return { success: false, error: 'Cancelled' };
+             // Save Dialog
+            const { filePath } = await dialog.showSaveDialog({
+                title: 'Save PDF',
+                defaultPath: path.join(app.getPath('downloads'), defaultFilename),
+                filters: [{ name: 'PDFs', extensions: ['pdf'] }]
+            });
+
+            if (filePath) {
+                fs.writeFileSync(filePath, pdfData);
+                mainWindow.webContents.send('conversion-status', { status: 'complete', message: 'PDF saved successfully!' });
+                shell.showItemInFolder(filePath);
+                return { success: true, filePath };
+            } else {
+                mainWindow.webContents.send('conversion-status', { status: 'cancelled', message: 'Save cancelled.' });
+                return { success: false, error: 'Cancelled' };
+            }
         }
 
     } catch (error) {
@@ -205,9 +188,6 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type }) => {
         mainWindow.webContents.send('conversion-status', { status: 'error', message: `Error: ${error.message}` });
         return { success: false, error: error.message };
     } finally {
-        if (offscreenWindow) {
-            // Close the window
-           offscreenWindow.destroy();
-        }
+        if (offscreenWindow) offscreenWindow.destroy();
     }
 });

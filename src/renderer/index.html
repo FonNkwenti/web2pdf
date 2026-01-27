@@ -39,14 +39,71 @@
                 </div>
             </div>
 
-            <button id="convertBtn" class="primary-button">
-                <span class="btn-text">Convert to PDF</span>
-                <div class="loading-spinner hidden"></div>
-            </button>
+            <!-- PDF Settings Section -->
+            <div class="settings-group">
+                <button id="toggleSettings" class="text-button settings-toggle">
+                    <span>⚙️ PDF Settings</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div id="settingsPanel" class="settings-panel hidden">
+                    <div class="setting-item">
+                        <label>Page Size</label>
+                        <select id="pageSize">
+                            <option value="A4" selected>A4</option>
+                            <option value="Letter">Letter</option>
+                            <option value="Legal">Legal</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Orientation</label>
+                        <select id="orientation">
+                            <option value="portrait" selected>Portrait</option>
+                            <option value="landscape">Landscape</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Margins</label>
+                        <select id="margins">
+                            <option value="default" selected>Standard</option>
+                            <option value="none">None (0px)</option>
+                            <option value="minimum">Minimum</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="previewBtn" class="secondary-button">
+                    <span class="btn-text">Preview PDF</span>
+                    <div class="loading-spinner hidden"></div>
+                </button>
+                <button id="convertBtn" class="primary-button">
+                    <span class="btn-text">Download PDF</span>
+                    <div class="loading-spinner hidden"></div>
+                </button>
+            </div>
 
             <div id="statusMessage" class="status-message hidden">
                 <span class="icon"></span>
                 <span class="text">Ready</span>
+            </div>
+
+            <!-- Preview Container -->
+            <div id="previewContainer" class="preview-container hidden">
+                <div class="preview-header">
+                    <h3>Preview</h3>
+                    <button id="closePreview" class="close-icon">&times;</button>
+                </div>
+                <iframe id="pdfPreviewFrame"></iframe>
+            </div>
+
+            <!-- Recent URLs -->
+            <div class="recent-section">
+                <h3>Recent URLs</h3>
+                <ul id="recentList" class="recent-list">
+                    <!-- Javascript will populate this -->
+                    <li class="empty-state">No recent history</li>
+                </ul>
             </div>
         </main>
 
