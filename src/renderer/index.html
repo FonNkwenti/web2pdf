@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web to PDF Converter</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Web to PDF</h1>
+            <p class="subtitle">Convert any webpage into a clean PDF document.</p>
+        </header>
+
+        <main>
+            <div class="input-group">
+                <label for="urlInput">Webpage URL</label>
+                <input type="url" id="urlInput" placeholder="https://example.com/article" required>
+            </div>
+
+            <div class="options-group">
+                <label>Conversion Mode</label>
+                <div class="radio-options">
+                    <label class="radio-item active">
+                        <input type="radio" name="conversionType" value="full" checked>
+                        <span class="radio-label">Full Page</span>
+                        <span class="radio-desc">Capture the entire webpage as seen.</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="conversionType" value="article">
+                        <span class="radio-label">Article Only</span>
+                        <span class="radio-desc">Extract text and images, remove clutter.</span>
+                    </label>
+                </div>
+            </div>
+
+            <button id="convertBtn" class="primary-button">
+                <span class="btn-text">Convert to PDF</span>
+                <div class="loading-spinner hidden"></div>
+            </button>
+
+            <div id="statusMessage" class="status-message hidden">
+                <span class="icon"></span>
+                <span class="text">Ready</span>
+            </div>
+        </main>
+
+        <footer>
+            <div class="tips">
+                <p><strong>Tip:</strong> Use "Article Only" for blogs and news sites to remove ads and sidebars.</p>
+            </div>
+            <button id="helpBtn" class="text-button">Need Help?</button>
+        </footer>
+    </div>
+    
+    <div id="helpModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>How to Use</h2>
+            <ul>
+                <li><strong>URL:</strong> Paste the full address (including https://).</li>
+                <li><strong>Full Page:</strong> Best for visual pages, landing pages, or when layout matters.</li>
+                <li><strong>Article Only:</strong> Best for reading. Removes navigation, ads, and popups.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

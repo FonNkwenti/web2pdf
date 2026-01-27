@@ -1,0 +1,313 @@
+:root {
+    --bg-color: #0f0f13;
+    --card-bg: #1a1a20;
+    --primary-color: #6c5ce7;
+    --primary-hover: #5b4cc4;
+    --accent-color: #a29bfe;
+    --text-main: #ffffff;
+    --text-muted: #b2bec3;
+    --border-color: #2d3436;
+    --glass-bg: rgba(26, 26, 32, 0.8);
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --font-family: 'Outfit', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    -webkit-user-select: none; /* Make app feel like an app */
+    user-select: none;
+    -webkit-app-region: drag; /* Make whole window draggable by default */
+}
+
+.app-container {
+    background: var(--card-bg);
+    width: 100%;
+    /* max-width is optional now, but good for readability on large screens. 
+       Let's allow it to grow but keep content centered. */
+    max-width: 600px; 
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    box-sizing: border-box;
+    /* Reset drag for interactive container if we want, but actually 
+       usually we want the background to be draggable. 
+       We will explicitly turn OFF drag for interactive elements. */
+}
+
+/* Header */
+header {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    text-align: center;
+    /* Parent is draggable, so this is too. */
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0;
+    background: linear-gradient(135deg, var(--text-main), var(--accent-color));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+
+/* Main Content */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+input[type="url"] {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    color: var(--text-main);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="url"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2);
+}
+
+/* IMPORTANT: Non-draggable elements */
+input, button, .radio-item, .text-button, .modal-content, a {
+    -webkit-app-region: no-drag;
+    cursor: default; /* or text/pointer */
+}
+
+input {
+    cursor: text;
+}
+
+button, .radio-item, .text-button {
+    cursor: pointer;
+}
+
+/* Radio Options (Cards) */
+.radio-options {
+    display: flex;
+    gap: 12px;
+}
+
+.radio-item {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.radio-item input {
+    display: none;
+}
+
+.radio-item.active {
+    background: rgba(108, 92, 231, 0.1);
+    border-color: var(--primary-color);
+}
+
+.radio-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-main);
+}
+
+.radio-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
+
+/* Button */
+.primary-button {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    color: white;
+    font-family: var(--font-family);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.primary-button:hover {
+    opacity: 0.95;
+}
+
+.primary-button:active {
+    transform: scale(0.98);
+}
+
+.primary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+}
+
+/* Status Message */
+.status-message {
+    padding: 12px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.status-message.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Footer */
+footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.tips {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.text-button {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-family: var(--font-family);
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+.text-button:hover {
+    opacity: 1;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(5px);
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 30px;
+    border-radius: var(--radius-lg);
+    width: 80%;
+    max-width: 400px;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.modal-content ul {
+    padding-left: 20px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Utilities */
+.hidden {
+    display: none;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.primary-button .btn-text.hidden {
+    display: none;
+}
