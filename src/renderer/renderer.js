@@ -110,6 +110,27 @@ function saveRecent(url) {
     loadRecent();
 }
 
+const clearUrlBtn = document.getElementById('clearUrlBtn');
+
+// ... existing code ...
+
+// Clear Button Logic
+function updateClearBtn() {
+    if (urlInput.value.length > 0) {
+        clearUrlBtn.classList.remove('hidden');
+    } else {
+        clearUrlBtn.classList.add('hidden');
+    }
+}
+
+urlInput.addEventListener('input', updateClearBtn);
+
+clearUrlBtn.addEventListener('click', () => {
+    urlInput.value = '';
+    urlInput.focus();
+    updateClearBtn();
+});
+
 // Event Listeners
 toggleSettings.addEventListener('click', () => {
     settingsPanel.classList.toggle('hidden');
@@ -157,7 +178,9 @@ async function handleConversion(isPreview = false) {
 
         if (isPreview && result && result.success && result.filePath) {
             // Show preview
-            pdfPreviewFrame.src = `file://${result.filePath}#toolbar=0&view=FitH`;
+            // Use 'file:' protocol properly handles spaces/characters
+            const fileUrl = new URL(`file://${result.filePath}`).href;
+            pdfPreviewFrame.src = `${fileUrl}#toolbar=0&view=FitH`;
             previewContainer.classList.remove('hidden');
             updateStatus('Preview generated.', 'complete');
         } 

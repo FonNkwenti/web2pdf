@@ -20,7 +20,10 @@
         <main>
             <div class="input-group">
                 <label for="urlInput">Webpage URL</label>
-                <input type="url" id="urlInput" placeholder="https://example.com/article" required>
+                <div class="input-wrapper">
+                    <input type="url" id="urlInput" placeholder="https://example.com/article" required>
+                    <button id="clearUrlBtn" class="clear-input-btn hidden" title="Clear URL">&times;</button>
+                </div>
             </div>
 
             <div class="options-group">

@@ -290,7 +290,7 @@ footer {
 
 /* Utilities */
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Loading Spinner */
@@ -508,4 +508,42 @@ footer {
     flex: 1;
     border: none;
     background: #fff; /* PDFs need white bg usually */
+}
+
+/* Input Wrapper for Clear Button */
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* Space for clear button */
+    box-sizing: border-box;
+}
+
+.clear-input-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s, color 0.2s;
+    -webkit-app-region: no-drag;
+}
+
+.clear-input-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
 }
