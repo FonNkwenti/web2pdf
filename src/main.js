@@ -14,16 +14,13 @@ let mainWindow;
 const createWindow = () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 600,
-    height: 700,
-    minWidth: 400,
-    minHeight: 500,
-    titleBarStyle: 'hidden',
-    titleBarOverlay: {
-        color: '#00000000',
-        symbolColor: '#ffffff',
-        height: 60
-    },
+    width: 1200,
+    height: 800,
+    minWidth: 1000,
+    minHeight: 700,
+    titleBarStyle: 'hiddenInset',
+    backgroundColor: '#121212',
+    trafficLightPosition: { x: 16, y: 18 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       plugins: true // Required to view PDFs

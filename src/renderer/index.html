@@ -3,131 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web to PDF Converter</title>
-    <!-- Google Fonts -->
+    <title>PDF Engine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="app-container">
-        <header>
-            <h1>Web to PDF</h1>
-            <p class="subtitle">Convert any webpage into a clean PDF document.</p>
-        </header>
-
-        <main>
-            <div class="input-group">
-                <label for="urlInput">Webpage URL</label>
-                <div class="input-wrapper">
-                    <input type="url" id="urlInput" placeholder="https://example.com/article" required>
-                    <button id="clearUrlBtn" class="clear-input-btn hidden" title="Clear URL">&times;</button>
-                </div>
-            </div>
-
-            <div class="options-group">
-                <label>Conversion Mode</label>
-                <div class="radio-options">
-                    <label class="radio-item active">
-                        <input type="radio" name="conversionType" value="full" checked>
-                        <span class="radio-label">Full Page</span>
-                        <span class="radio-desc">Capture the entire webpage as seen.</span>
-                    </label>
-                    <label class="radio-item">
-                        <input type="radio" name="conversionType" value="article">
-                        <span class="radio-label">Article Only</span>
-                        <span class="radio-desc">Extract text and images, remove clutter.</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- PDF Settings Section -->
-            <div class="settings-group">
-                <button id="toggleSettings" class="text-button settings-toggle">
-                    <span>⚙️ PDF Settings</span>
-                    <span class="arrow">▼</span>
+    <!-- Title Bar -->
+    <div class="titlebar">
+        <div class="traffic-lights"></div>
+        <div class="titlebar-title">PROCESSOR NODE V2.4.0</div>
+        <div class="titlebar-controls">
+            <div class="theme-toggle">
+                <button class="theme-btn" data-theme="light" title="Light Mode">
+                    <span class="material-symbols-outlined">light_mode</span>
                 </button>
-                <div id="settingsPanel" class="settings-panel hidden">
-                    <div class="setting-item">
-                        <label>Page Size</label>
-                        <select id="pageSize">
-                            <option value="A4" selected>A4</option>
-                            <option value="Letter">Letter</option>
-                            <option value="Legal">Legal</option>
-                        </select>
-                    </div>
-                    <div class="setting-item">
-                        <label>Orientation</label>
-                        <select id="orientation">
-                            <option value="portrait" selected>Portrait</option>
-                            <option value="landscape">Landscape</option>
-                        </select>
-                    </div>
-                    <div class="setting-item">
-                        <label>Margins</label>
-                        <select id="margins">
-                            <option value="default" selected>Standard</option>
-                            <option value="none">None (0px)</option>
-                            <option value="minimum">Minimum</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="button-group">
-                <button id="previewBtn" class="secondary-button">
-                    <span class="btn-text">Preview PDF</span>
-                    <div class="loading-spinner hidden"></div>
+                <button class="theme-btn active" data-theme="dark" title="Dark Mode">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                    <span>DARK</span>
                 </button>
-                <button id="convertBtn" class="primary-button">
-                    <span class="btn-text">Download PDF</span>
-                    <div class="loading-spinner hidden"></div>
+                <button class="theme-btn" data-theme="system" title="System Preference">
+                    <span class="material-symbols-outlined">desktop_windows</span>
                 </button>
             </div>
-
-            <div id="statusMessage" class="status-message hidden">
-                <span class="icon"></span>
-                <span class="text">Ready</span>
-            </div>
-
-            <!-- Preview Container -->
-            <div id="previewContainer" class="preview-container hidden">
-                <div class="preview-header">
-                    <h3>Preview</h3>
-                    <button id="closePreview" class="close-icon">&times;</button>
-                </div>
-                <iframe id="pdfPreviewFrame"></iframe>
-            </div>
-
-            <!-- Recent URLs -->
-            <div class="recent-section">
-                <h3>Recent URLs</h3>
-                <ul id="recentList" class="recent-list">
-                    <!-- Javascript will populate this -->
-                    <li class="empty-state">No recent history</li>
-                </ul>
-            </div>
-        </main>
-
-        <footer>
-            <div class="tips">
-                <p><strong>Tip:</strong> Use "Article Only" for blogs and news sites to remove ads and sidebars.</p>
-            </div>
-            <button id="helpBtn" class="text-button">Need Help?</button>
-        </footer>
-    </div>
-    
-    <div id="helpModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>How to Use</h2>
-            <ul>
-                <li><strong>URL:</strong> Paste the full address (including https://).</li>
-                <li><strong>Full Page:</strong> Best for visual pages, landing pages, or when layout matters.</li>
-                <li><strong>Article Only:</strong> Best for reading. Removes navigation, ads, and popups.</li>
-            </ul>
+            <div class="divider-v"></div>
+            <button class="icon-btn" id="settingsBtn" title="Settings">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
         </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">
+                    <span class="material-symbols-outlined logo-icon">picture_as_pdf</span>
+                    PDF Engine
+                </h1>
+                <p class="tagline">High-fidelity web serialization.</p>
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Source URL -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Source URL
+                        <span class="label-hint">HTTPS Required</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">link</span>
+                        <input type="url" id="urlInput" class="form-input" placeholder="Enter target URI...">
+                    </div>
+                </div>
+
+                <!-- Conversion Mode -->
+                <div class="form-group">
+                    <label class="form-label">Conversion Mode</label>
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" data-mode="full">
+                            <span class="material-symbols-outlined">fullscreen</span>
+                            FULL PAGE
+                        </button>
+                        <button class="mode-btn" data-mode="article">
+                            <span class="material-symbols-outlined">segment</span>
+                            ARTICLE
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="options-panel">
+                    <div class="option-grid">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="jsRuntime" checked>
+                            <span>JS Runtime</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="loadAssets" checked>
+                            <span>Load Assets</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="cookies">
+                            <span>Cookies</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="noCache">
+                            <span>No Cache</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button id="previewBtn" class="btn btn-secondary">
+                    <span class="material-symbols-outlined">visibility</span>
+                    <span class="btn-text">PREVIEW RENDER</span>
+                    <div class="loading-spinner hidden"></div>
+                </button>
+                <button id="convertBtn" class="btn btn-primary">
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                    <span class="btn-text">START CONVERSION</span>
+                    <div class="loading-spinner hidden"></div>
+                </button>
+            </div>
+        </aside>
+
+        <!-- History Log Section -->
+        <section class="content-area">
+            <header class="content-header">
+                <div class="header-left">
+                    <span class="header-title">
+                        <div class="header-icon">
+                            <span class="material-symbols-outlined">database</span>
+                        </div>
+                        HISTORY LOG
+                    </span>
+                    <div class="divider-v"></div>
+                    <div class="sort-control">
+                        <span class="sort-label">Sort:</span>
+                        <select id="sortSelect" class="sort-select">
+                            <option value="timestamp-desc">Timestamp (Desc)</option>
+                            <option value="timestamp-asc">Timestamp (Asc)</option>
+                            <option value="size">File Size</option>
+                            <option value="status">Status</option>
+                        </select>
+                        <span class="material-symbols-outlined dropdown-arrow">expand_more</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <input type="text" id="filterInput" class="filter-input" placeholder="Filter logs...">
+                    <button id="clearLogsBtn" class="btn-clear">Clear</button>
+                </div>
+            </header>
+
+            <div class="log-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th class="col-id">ID</th>
+                            <th class="col-timestamp">Timestamp</th>
+                            <th class="col-url">Target URL</th>
+                            <th class="col-mode">Mode</th>
+                            <th class="col-size">Size</th>
+                            <th class="col-res">Res</th>
+                            <th class="col-status">Status</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+                <div id="emptyState" class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">history</span>
+                    <p>No conversion history yet</p>
+                    <p class="empty-hint">Enter a URL and start your first conversion</p>
+                </div>
+            </div>
+
+            <!-- FAB -->
+            <button id="fabBtn" class="fab" title="New Conversion">
+                <span class="material-symbols-outlined">add</span>
+            </button>
+        </section>
+    </main>
+
+    <!-- Footer Status Bar -->
+    <footer class="statusbar">
+        <div class="status-left">
+            <div class="status-item status-indicator">
+                <span class="status-dot"></span>
+                <span>System: Operational</span>
+            </div>
+            <div class="divider-v small"></div>
+            <div class="status-item">RAM: <span id="ramUsage">--</span> <span class="muted">/ 1.4GB</span></div>
+            <div class="status-item">Ping: <span id="pingValue">--</span></div>
+        </div>
+        <div class="status-right">
+            <span class="status-item">Threads: <span id="threadCount">4</span> Active</span>
+            <div class="divider-v small"></div>
+            <div class="status-item engine-info">
+                <span class="muted">Engine:</span>
+                <span class="engine-version">Chromium v119</span>
+                <span class="material-symbols-outlined">terminal</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal hidden">
+        <div class="modal-content preview-modal">
+            <div class="modal-header">
+                <h3>PDF Preview</h3>
+                <button id="closePreview" class="close-btn">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <iframe id="pdfPreviewFrame" class="preview-frame"></iframe>
+        </div>
+    </div>
+
+    <!-- Status Toast -->
+    <div id="statusToast" class="status-toast hidden">
+        <span class="material-symbols-outlined toast-icon">info</span>
+        <span id="statusText">Ready</span>
     </div>
 
     <script src="renderer.js"></script>
