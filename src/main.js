@@ -12,14 +12,8 @@ const os = require('os');
 let mainWindow;
 
 const createWindow = () => {
-  const iconPath = path.join(__dirname, '../assets/icon.png');
-  if (process.platform === 'darwin') {
-    app.dock.setIcon(iconPath);
-  }
-
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    icon: iconPath,
     width: 1200,
     height: 800,
     minWidth: 1000,
