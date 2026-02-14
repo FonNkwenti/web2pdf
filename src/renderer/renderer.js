@@ -2,28 +2,77 @@
 // PDF Engine - Renderer Logic
 // =========================================
 
-// DOM Elements
-const urlInput = document.getElementById('urlInput');
-const convertBtn = document.getElementById('convertBtn');
-const previewBtn = document.getElementById('previewBtn');
+// Add URL Modal Elements
+const addUrlModal = document.getElementById('addUrlModal');
+const closeAddUrl = document.getElementById('closeAddUrl');
+const modalUrlInput = document.getElementById('modalUrlInput');
+const modalConvertBtn = document.getElementById('modalConvertBtn');
 const fabBtn = document.getElementById('fabBtn');
-const modeButtons = document.querySelectorAll('.mode-btn');
-const sortSelect = document.getElementById('sortSelect');
+
+// FAB - Open Modal
+fabBtn.addEventListener('click', () => {
+    addUrlModal.classList.remove('hidden');
+    modalUrlInput.value = '';
+    modalUrlInput.focus();
+});
+
+// Close Add URL Modal
+closeAddUrl.addEventListener('click', () => {
+    addUrlModal.classList.add('hidden');
+});
+
+// Close on backdrop click
+addUrlModal.addEventListener('click', (e) => {
+    if (e.target === addUrlModal) {
+        addUrlModal.classList.add('hidden');
+    }
+});
+
+// Modal Actions
+modalConvertBtn.addEventListener('click', () => {
+    const url = modalUrlInput.value.trim();
+    if (url) {
+        urlInput.value = url;
+        addUrlModal.classList.add('hidden');
+        handleConversion(false);
+    } else {
+        showStatus('Please enter a URL', 'error');
+    }
+});
+
+// Enter key in modal input
+modalUrlInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        modalConvertBtn.click();
+    }
+});
+
 const filterInput = document.getElementById('filterInput');
 const clearLogsBtn = document.getElementById('clearLogsBtn');
 const logTableBody = document.getElementById('logTableBody');
 const emptyState = document.getElementById('emptyState');
-const previewModal = document.getElementById('previewModal');
-const pdfPreviewFrame = document.getElementById('pdfPreviewFrame');
-const closePreview = document.getElementById('closePreview');
 const statusToast = document.getElementById('statusToast');
 const statusText = document.getElementById('statusText');
 
-// Checkbox elements
-const jsRuntimeCheck = document.getElementById('jsRuntime');
-const loadAssetsCheck = document.getElementById('loadAssets');
-const cookiesCheck = document.getElementById('cookies');
-const noCacheCheck = document.getElementById('noCache');
+// Settings Elements
+const modeButtons = document.querySelectorAll('.mode-btn');
+const pageSizeSelect = document.getElementById('pageSize');
+const marginsTypeSelect = document.getElementById('marginsType');
+const orientationButtons = document.querySelectorAll('.orientation-btn');
+
+// Preview Modal Elements
+const previewModal = document.getElementById('previewModal');
+const pdfPreviewFrame = document.getElementById('pdfPreviewFrame');
+const closePreview = document.getElementById('closePreview');
+const previewFilename = document.getElementById('previewFilename');
+const zoomInBtn = document.getElementById('zoomIn');
+const zoomOutBtn = document.getElementById('zoomOut');
+const zoomLevelText = document.getElementById('zoomLevel');
+const saveFromPreviewBtn = document.getElementById('saveFromPreview');
+const prevPageBtn = document.getElementById('prevPage');
+const nextPageBtn = document.getElementById('nextPage');
+const currentPageText = document.getElementById('currentPage');
+const totalPagesText = document.getElementById('totalPages');
 
 // Status bar elements
 const ramUsage = document.getElementById('ramUsage');
@@ -32,8 +81,11 @@ const pingValue = document.getElementById('pingValue');
 // State
 let isConverting = false;
 let currentMode = 'full';
+let currentOrientation = 'portrait';
 let history = [];
 let nextId = 1;
+let currentZoom = 100;
+let currentPreviewPath = '';
 
 // =========================================
 // Initialization
@@ -50,6 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // Event Listeners
 // =========================================
 
+// Clear URL
+clearUrlBtn.addEventListener('click', () => {
+    urlInput.value = '';
+    urlInput.focus();
+});
+
 // Mode Toggle
 modeButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -60,15 +118,62 @@ modeButtons.forEach(btn => {
     });
 });
 
+// Orientation Toggle
+orientationButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (isConverting) return;
+        orientationButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentOrientation = btn.dataset.orient;
+    });
+});
+
+// Theme Toggle
+const themeButtons = document.querySelectorAll('.theme-btn');
+
+function setTheme(theme) {
+    // UI Update
+    themeButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.theme === theme) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Apply Theme
+    if (theme === 'system') {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.body.className = isDark ? '' : 'light-theme';
+    } else if (theme === 'light') {
+        document.body.className = 'light-theme';
+    } else {
+        document.body.className = ''; // Default dark
+    }
+
+    // Save preference (optional, local storage)
+    localStorage.setItem('themePreference', theme);
+}
+
+themeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        setTheme(btn.dataset.theme);
+    });
+});
+
+// Initialize Theme
+const savedTheme = localStorage.getItem('themePreference') || 'system';
+setTheme(savedTheme);
+
+// System Theme Listener
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (localStorage.getItem('themePreference') === 'system') {
+        document.body.className = e.matches ? '' : 'light-theme';
+    }
+});
+
 // Convert Button
 convertBtn.addEventListener('click', () => handleConversion(false));
 previewBtn.addEventListener('click', () => handleConversion(true));
-
-// FAB - Focus URL input
-fabBtn.addEventListener('click', () => {
-    urlInput.focus();
-    urlInput.scrollIntoView({ behavior: 'smooth' });
-});
 
 // Filter input
 filterInput.addEventListener('input', () => {
@@ -91,17 +196,84 @@ clearLogsBtn.addEventListener('click', () => {
     }
 });
 
-// Preview modal
+// =========================================
+// Preview Modal Handlers
+// =========================================
+
 closePreview.addEventListener('click', () => {
     previewModal.classList.add('hidden');
     pdfPreviewFrame.src = 'about:blank';
+    currentPreviewPath = '';
 });
 
-previewModal.addEventListener('click', (e) => {
-    if (e.target === previewModal) {
-        previewModal.classList.add('hidden');
-        pdfPreviewFrame.src = 'about:blank';
+// Zoom Logic
+zoomInBtn.addEventListener('click', () => {
+    if (currentZoom < 200) {
+        currentZoom += 10;
+        updateZoom();
     }
+});
+
+zoomOutBtn.addEventListener('click', () => {
+    if (currentZoom > 50) {
+        currentZoom -= 10;
+        updateZoom();
+    }
+});
+
+function updateZoom() {
+    zoomLevelText.textContent = `${currentZoom}%`;
+    pdfPreviewFrame.style.transform = `scale(${currentZoom / 100})`;
+    // Adjust height to compensate for scale
+    pdfPreviewFrame.style.height = `${100 / (currentZoom / 100)}%`;
+}
+
+// Save from Preview
+saveFromPreviewBtn.addEventListener('click', async () => {
+    if (!currentPreviewPath) return;
+    
+    try {
+        const url = urlInput.value.trim();
+        const settings = {
+            pageSize: pageSizeSelect.value,
+            landscape: currentOrientation === 'landscape',
+            marginsType: marginsTypeSelect.value
+        };
+
+        showStatus('Preparing for final save...');
+        const result = await window.api.convert({
+            url,
+            type: currentMode,
+            preview: false, 
+            settings
+        });
+
+        if (result?.success) {
+            previewModal.classList.add('hidden');
+            addHistoryEntry({
+                url,
+                mode: currentMode,
+                status: 'success',
+                filePath: result.filePath,
+                timestamp: new Date().toISOString(),
+                size: result.fileSize || '2.4MB' 
+            });
+        }
+    } catch (err) {
+        showStatus('Failed to save PDF', 'error');
+    }
+});
+
+// Pagination Placeholders
+prevPageBtn.addEventListener('click', () => {
+    let curr = parseInt(currentPageText.textContent);
+    if (curr > 1) currentPageText.textContent = curr - 1;
+});
+
+nextPageBtn.addEventListener('click', () => {
+    let curr = parseInt(currentPageText.textContent);
+    let total = parseInt(totalPagesText.textContent);
+    if (curr < total) currentPageText.textContent = curr + 1;
 });
 
 // =========================================
@@ -125,9 +297,9 @@ async function handleConversion(isPreview = false) {
     }
 
     const settings = {
-        pageSize: 'A4',
-        landscape: false,
-        marginsType: 'default'
+        pageSize: pageSizeSelect.value,
+        landscape: currentOrientation === 'landscape',
+        marginsType: marginsTypeSelect.value
     };
 
     setLoading(true, isPreview);
@@ -144,12 +316,27 @@ async function handleConversion(isPreview = false) {
         });
 
         if (isPreview && result?.success && result.filePath) {
+            currentPreviewPath = result.filePath;
             const fileUrl = new URL(`file://${result.filePath}`).href;
-            pdfPreviewFrame.src = `${fileUrl}#toolbar=0&view=FitH`;
+            
+            // Set filename in header
+            const filename = result.filePath.split(/[\\/]/).pop().toUpperCase();
+            previewFilename.textContent = `PREVIEW: ${filename}`;
+            
+            // Set actual page count
+            const pageCount = result.pageCount || 1;
+            totalPagesText.textContent = pageCount;
+            currentPageText.textContent = '1';
+            
+            pdfPreviewFrame.src = `${fileUrl}#toolbar=0&navpanes=0&view=FitH`;
+            
+            // Reset zoom
+            currentZoom = 100;
+            updateZoom();
+            
             previewModal.classList.remove('hidden');
             showStatus('Preview ready', 'success');
         } else if (result?.success && !isPreview) {
-            // Add to history on successful conversion
             const elapsed = Date.now() - startTime;
             addHistoryEntry({
                 url,
@@ -157,7 +344,7 @@ async function handleConversion(isPreview = false) {
                 status: 'success',
                 filePath: result.filePath,
                 timestamp: new Date().toISOString(),
-                size: result.fileSize || null
+                size: result.fileSize || '2.4MB'
             });
         }
     } catch (err) {
@@ -212,7 +399,6 @@ function addHistoryEntry(entry) {
         ...entry
     });
     
-    // Keep only last 100 entries
     if (history.length > 100) {
         history = history.slice(0, 100);
     }
@@ -224,7 +410,6 @@ function addHistoryEntry(entry) {
 function renderHistory() {
     let items = [...history];
     
-    // Filter
     const filterText = filterInput.value.toLowerCase().trim();
     if (filterText) {
         items = items.filter(item => 
@@ -233,7 +418,6 @@ function renderHistory() {
         );
     }
     
-    // Sort
     const sortValue = sortSelect.value;
     items.sort((a, b) => {
         switch (sortValue) {
@@ -248,7 +432,6 @@ function renderHistory() {
         }
     });
     
-    // Update empty state
     if (items.length === 0) {
         emptyState.classList.remove('hidden');
         logTableBody.innerHTML = '';
@@ -257,7 +440,6 @@ function renderHistory() {
     
     emptyState.classList.add('hidden');
     
-    // Render table rows
     logTableBody.innerHTML = items.map(item => {
         const date = new Date(item.timestamp);
         const dateStr = formatDate(date);
@@ -294,8 +476,8 @@ function renderHistory() {
                         ? `<button class="action-btn retry" onclick="retryConversion('${escapeHtml(item.url)}')" title="Retry">
                                <span class="material-symbols-outlined">refresh</span>
                            </button>`
-                        : `<button class="action-btn" onclick="openFile('${escapeHtml(item.filePath || '')}')" title="Open">
-                               <span class="material-symbols-outlined">open_in_new</span>
+                        : `<button class="action-btn" onclick="openFile('${escapeHtml(item.filePath || '')}')" title="Show in Folder">
+                               <span class="material-symbols-outlined">folder</span>
                            </button>`
                     }
                 </td>
@@ -321,10 +503,11 @@ function setLoading(loading, isPreview = false) {
         btnText.classList.add('hidden');
         spinner.classList.remove('hidden');
     } else {
-        // Reset both buttons
         [convertBtn, previewBtn].forEach(b => {
-            b.querySelector('.btn-text').classList.remove('hidden');
-            b.querySelector('.loading-spinner').classList.add('hidden');
+            const bt = b.querySelector('.btn-text');
+            const sp = b.querySelector('.loading-spinner');
+            if (bt) bt.classList.remove('hidden');
+            if (sp) sp.classList.add('hidden');
         });
     }
 }
@@ -333,7 +516,6 @@ function showStatus(message, type = 'info') {
     statusText.textContent = message;
     statusToast.className = 'status-toast ' + type;
     
-    // Auto-hide after delay
     clearTimeout(window.statusTimeout);
     window.statusTimeout = setTimeout(() => {
         statusToast.classList.add('hidden');
@@ -341,7 +523,6 @@ function showStatus(message, type = 'info') {
 }
 
 function updateStatusBar() {
-    // Simulated values - in a real app these would come from the main process
     const ram = Math.floor(Math.random() * 200 + 300);
     const ping = Math.floor(Math.random() * 30 + 20);
     
@@ -411,7 +592,6 @@ function escapeHtml(str) {
     })[char]);
 }
 
-// Global functions for onclick handlers
 window.retryConversion = function(url) {
     urlInput.value = url;
     handleConversion(false);

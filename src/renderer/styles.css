@@ -39,6 +39,28 @@
     --radius-lg: 12px;
 }
 
+/* Light Theme Overrides */
+body.light-theme {
+    /* Colors */
+    --brand-blue: #3b82f6; 
+    --brand-grey: #64748b;
+    --ui-bg: #f8fafc;
+    --ui-surface: #ffffff;
+    --ui-panel: #f1f5f9;
+    --ui-border: #e2e8f0;
+    --ui-border-light: #cbd5e1;
+    --ui-accent: #2563eb;
+
+    /* Text */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+
+    /* Status Colors */
+    --success-bg: rgba(34, 197, 94, 0.2);
+    --error-bg: rgba(239, 68, 68, 0.2);
+}
+
 /* Reset & Base */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -271,6 +293,10 @@ body {
     text-transform: uppercase;
 }
 
+/* =========================================
+   Inputs & Buttons
+   ========================================= */
+
 .input-wrapper {
     position: relative;
     display: flex;
@@ -280,23 +306,50 @@ body {
 .input-icon {
     position: absolute;
     left: 12px;
+    color: var(--text-muted);
+    font-size: 20px;
+}
+
+.input-clear-btn {
+    position: absolute;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0; 
+    transition: opacity 0.2s, background 0.2s;
+}
+
+.input-wrapper:hover .input-clear-btn,
+.input-clear-btn:focus {
+    opacity: 1;
+}
+
+.input-clear-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.input-clear-btn .material-symbols-outlined {
     font-size: 16px;
-    color: #52525b;
-    transition: color 0.15s;
 }
 
 .form-input {
     width: 100%;
-    height: 40px;
-    padding: 0 12px 0 36px;
-    background: var(--ui-bg);
+    background: var(--bg-card);
     border: 1px solid var(--ui-border);
     border-radius: var(--radius-md);
+    padding: 10px 36px 10px 40px; /* Right padding for clear btn */
     color: var(--text-primary);
-    font-family: var(--font-sans);
+    font-family: inherit;
     font-size: 13px;
-    outline: none;
-    transition: all 0.15s ease;
+    transition: all 0.2s;
 }
 
 .form-input::placeholder {
@@ -304,13 +357,161 @@ body {
 }
 
 .form-input:focus {
-    border-color: var(--brand-blue);
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.15);
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
 }
 
 .form-input:focus + .input-icon,
 .input-wrapper:focus-within .input-icon {
     color: var(--brand-blue);
+}
+
+.settings-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.setting-item {
+    flex: 1;
+    min-width: 100px;
+}
+
+.setting-item.full-width {
+    flex: 100%;
+}
+
+.setting-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.form-select {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24' viewBox='0 -960 960 960' width='24' fill='%2371717a'%3E%3Cpath d='M480-360 280-560h400L480-360Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 20px;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Theme Toggle (Segmented Control) */
+.theme-toggle {
+    display: flex;
+    background: var(--ui-panel);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    gap: 2px;
+}
+
+.theme-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 32px;
+    justify-content: center;
+}
+
+.theme-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.light-theme .theme-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.theme-btn.active {
+    background: var(--ui-border-light); 
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    font-weight: 600;
+}
+
+.theme-btn span:not(.material-symbols-outlined) {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-condensed);
+    display: none; /* Hide text by default */
+}
+
+/* Show text only for active button if logic requires, 
+   but user image showed text only on active dark button. 
+   We will handle text visibility via class in JS or keep it simple here.
+   Let's toggle a class 'show-text' or rely on .active */
+.theme-btn.active span:not(.material-symbols-outlined) {
+    display: block;
+}
+
+.theme-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.orientation-toggle {
+    display: flex;
+    background: var(--bg-card);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    gap: 2px;
+}
+
+.orientation-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.orientation-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.orientation-btn.active {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.orientation-btn .material-symbols-outlined {
+    font-size: 16px;
 }
 
 /* Mode Toggle */
@@ -539,7 +740,84 @@ body {
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 10px;
+ /* =========================================
+   Add URL Modal
+   =========================================*/ /* Add URL Modal */
+.add-url-modal {
+    width: 80%;
+    max-width: 1000px; /* Sensible cap so it doesn't look ridiculous on ultra-wide screens */
+    padding: 0;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.add-url-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.add-url-modal .modal-header h3 {
+    font-family: var(--font-condensed);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.add-url-modal .modal-body {
+    padding: 48px 32px;
+}
+
+.add-url-modal .form-label {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
+.add-url-modal .input-wrapper .material-symbols-outlined {
+    font-size: 24px;
+    color: var(--text-muted);
+    left: 16px; /* Adjust icon position for larger input */
+}
+
+/* Make input larger for this modal */
+.add-url-modal .form-input {
+    height: 56px;
+    font-size: 16px;
+    padding-left: 50px;
+}
+
+.add-url-modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 24px 32px;
+    background: var(--ui-bg);
+    border-top: 1px solid var(--ui-border);
+}
+
+.add-url-modal .modal-footer .btn {
+    width: auto;
+    padding: 0 32px;
+    height: 48px;
+    font-size: 14px;
     font-weight: 700;
+    letter-spacing: 0.05em;
+    border-radius: var(--radius-md);
+}    font-weight: 700;
     padding-right: 20px;
     cursor: pointer;
     outline: none;
@@ -983,54 +1261,232 @@ body {
     overflow: hidden;
 }
 
+/* =========================================
+   Modal & Preview Overhaul
+   ========================================= */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
 .preview-modal {
-    width: 90%;
-    max-width: 1000px;
-    height: 80%;
+    width: 95%;
+    height: 95%;
+    max-width: 1400px;
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border-light);
     display: flex;
     flex-direction: column;
 }
 
-.modal-header {
-    padding: 16px 20px;
+.preview-toolbar {
+    height: 64px;
+    background: #000;
+    padding: 0 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid var(--ui-border);
 }
 
-.modal-header h3 {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
+.toolbar-left, .toolbar-right, .toolbar-center {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-.close-btn {
-    padding: 4px;
+.toolbar-icon {
+    color: #a855f7;
+    font-size: 24px;
+}
+
+#previewFilename {
+    font-family: var(--font-condensed);
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-display {
+    font-family: var(--font-condensed);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    background: #111;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+}
+
+#currentPage {
+    color: white;
+}
+
+.tool-btn {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
 }
 
-.close-btn:hover {
+.tool-btn:hover {
     color: white;
     background: rgba(255, 255, 255, 0.1);
 }
 
-.close-btn .material-symbols-outlined {
-    font-size: 20px;
-    display: block;
+.theme-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tool-label {
+    font-family: var(--font-condensed);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.theme-switch {
+    display: flex;
+    background: #111;
+    padding: 3px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--ui-border);
+}
+
+.theme-tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.theme-tool-btn.active {
+    background: #27272a;
+    color: white;
+}
+
+.theme-tool-btn span.material-symbols-outlined {
+    font-size: 16px;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    background: #111;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-md);
+    padding: 2px;
+}
+
+.zoom-display {
+    font-family: var(--font-condensed);
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    min-width: 44px;
+    text-align: center;
+}
+
+.btn-save-pdf {
+    background: #a855f7;
+    color: white;
+    font-weight: 800;
+    font-size: 11px;
+    padding: 0 16px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+}
+
+.btn-save-pdf:hover {
+    background: #c084fc;
+}
+
+.btn-save-pdf:active {
+    transform: scale(0.96);
+}
+
+.preview-body {
+    flex: 1;
+    background: #000;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.pdf-scroll-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    background: #111;
+    border-radius: 4px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
 }
 
 .preview-frame {
-    flex: 1;
+    width: 100%;
+    max-width: 900px;
+    height: 100%;
     border: none;
     background: white;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    transform-origin: top center;
+    transition: transform 0.2s;
 }
+
+.preview-statusbar {
+    background: #000;
+    border-top: 1px solid var(--ui-border);
+}
+
+/* Close btn special */
+.close-x {
+    color: var(--text-muted);
+}
+.close-x:hover {
+    color: #ef4444;
+}
+
 
 /* =========================================
    Status Toast

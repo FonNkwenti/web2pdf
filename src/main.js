@@ -12,8 +12,14 @@ const os = require('os');
 let mainWindow;
 
 const createWindow = () => {
+  const iconPath = path.join(__dirname, '../assets/icon.png');
+  if (process.platform === 'darwin') {
+    app.dock.setIcon(iconPath);
+  }
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
+    icon: iconPath,
     width: 1200,
     height: 800,
     minWidth: 1000,
@@ -172,8 +178,19 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type, preview, settings })
         if (preview) {
              const tempPath = path.join(os.tmpdir(), `preview_${Date.now()}.pdf`);
              fs.writeFileSync(tempPath, pdfData);
+             
+             // Simple way to get page count from PDF buffer
+             let pageCount = 1;
+             try {
+                 const pdfString = pdfData.toString('binary');
+                 const matches = pdfString.match(/\/Type\s*\/Page\b/g);
+                 pageCount = matches ? matches.length : 1;
+             } catch (e) {
+                 console.error('Error counting pages:', e);
+             }
+
              mainWindow.webContents.send('conversion-status', { status: 'complete', message: 'Preview ready' });
-             return { success: true, filePath: tempPath };
+             return { success: true, filePath: tempPath, pageCount };
         } else {
              // Save Dialog
             const { filePath } = await dialog.showSaveDialog({
@@ -200,4 +217,24 @@ ipcMain.handle('convert-to-pdf', async (event, { url, type, preview, settings })
     } finally {
         if (offscreenWindow) offscreenWindow.destroy();
     }
+});
+
+ipcMain.handle('open-path', async (event, filePath) => {
+    try {
+        await shell.showItemInFolder(filePath);
+        return { success: true };
+    } catch (error) {   
+        console.error('Failed to open path:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+app.whenReady().then(() => {
+    createWindow();
+
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow();
+        }
+    });
 });

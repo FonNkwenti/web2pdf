@@ -57,6 +57,9 @@
                     <div class="input-wrapper">
                         <span class="material-symbols-outlined input-icon">link</span>
                         <input type="url" id="urlInput" class="form-input" placeholder="Enter target URI...">
+                        <button id="clearUrlBtn" class="input-clear-btn" title="Clear URL">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
                     </div>
                 </div>
 
@@ -75,25 +78,40 @@
                     </div>
                 </div>
 
-                <!-- Options -->
-                <div class="options-panel">
-                    <div class="option-grid">
-                        <label class="checkbox-item">
-                            <input type="checkbox" id="jsRuntime" checked>
-                            <span>JS Runtime</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" id="loadAssets" checked>
-                            <span>Load Assets</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" id="cookies">
-                            <span>Cookies</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" id="noCache">
-                            <span>No Cache</span>
-                        </label>
+                <!-- PDF Settings -->
+                <div class="form-group">
+                    <label class="form-label">PDF Settings</label>
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label class="setting-label">Page Size</label>
+                            <select id="pageSize" class="form-select">
+                                <option value="A4" selected>A4</option>
+                                <option value="Letter">Letter</option>
+                                <option value="Legal">Legal</option>
+                                <option value="Tabloid">Tabloid</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Margins</label>
+                            <select id="marginsType" class="form-select">
+                                <option value="default" selected>Default</option>
+                                <option value="minimum">Minimum</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                        <div class="setting-item full-width">
+                            <label class="setting-label">Orientation</label>
+                            <div class="orientation-toggle">
+                                <button class="orientation-btn active" data-orient="portrait">
+                                    <span class="material-symbols-outlined">crop_portrait</span>
+                                    Portrait
+                                </button>
+                                <button class="orientation-btn" data-orient="landscape">
+                                    <span class="material-symbols-outlined">crop_landscape</span>
+                                    Landscape
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -197,13 +215,91 @@
     <!-- Preview Modal -->
     <div id="previewModal" class="modal hidden">
         <div class="modal-content preview-modal">
+            <div class="modal-header preview-toolbar">
+                <div class="toolbar-left">
+                    <span class="material-symbols-outlined toolbar-icon">picture_as_pdf</span>
+                    <h3 id="previewFilename">PREVIEW: DOCUMENT.PDF</h3>
+                </div>
+                
+                <div class="toolbar-center">
+                    <div class="pagination-controls">
+                        <button class="tool-btn" id="prevPage"><span class="material-symbols-outlined">chevron_left</span></button>
+                        <div class="page-display">
+                            <span id="currentPage">1</span> / <span id="totalPages">12</span>
+                        </div>
+                        <button class="tool-btn" id="nextPage"><span class="material-symbols-outlined">chevron_right</span></button>
+                    </div>
+                </div>
+                
+                <div class="toolbar-right">
+                    <div class="zoom-controls">
+                        <button class="tool-btn" id="zoomOut"><span class="material-symbols-outlined">remove</span></button>
+                        <span id="zoomLevel" class="zoom-display">100%</span>
+                        <button class="tool-btn" id="zoomIn"><span class="material-symbols-outlined">add</span></button>
+                    </div>
+                    
+                    <div class="divider-v small"></div>
+                    
+                    <button id="saveFromPreview" class="btn-save-pdf">
+                        <span class="material-symbols-outlined">download</span>
+                        SAVE PDF
+                    </button>
+                    
+                    <button id="closePreview" class="tool-btn close-x">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="preview-body">
+                <div id="pdfContainer" class="pdf-scroll-container">
+                    <iframe id="pdfPreviewFrame" class="preview-frame"></iframe>
+                </div>
+            </div>
+
+            <footer class="statusbar preview-statusbar">
+                <div class="status-left">
+                    <div class="status-item status-indicator">
+                        <span class="status-dot"></span>
+                        <span>SYSTEM: NOMINAL</span>
+                    </div>
+                    <div class="divider-v small"></div>
+                    <div class="status-item">MEMORY: 342MB <span class="muted">/ 1.4GB</span></div>
+                </div>
+                <div class="status-right">
+                    <span class="status-item">THREADS: 4 ACTIVE</span>
+                    <div class="divider-v small"></div>
+                    <div class="status-item">CHROMIUM V119.0.2</div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Add URL Modal -->
+    <div id="addUrlModal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content add-url-modal">
             <div class="modal-header">
-                <h3>PDF Preview</h3>
-                <button id="closePreview" class="close-btn">
+                <h3>NEW CONVERSION</h3>
+                <button id="closeAddUrl" class="tool-btn close-x">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <iframe id="pdfPreviewFrame" class="preview-frame"></iframe>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Target URL</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">link</span>
+                        <input type="url" id="modalUrlInput" class="form-input" placeholder="https://example.com/page-to-convert" autofocus>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="modalConvertBtn" class="btn btn-primary">
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                    START CONVERSION
+                </button>
+            </div>
         </div>
     </div>
 
